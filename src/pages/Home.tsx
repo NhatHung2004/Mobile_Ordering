@@ -27,7 +27,7 @@ export default function Home({
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 hide-scrollbar pb-24 duration-300">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white px-5 pt-8 pb-4 shadow-sm">
+      <div className="sticky top-0 z-10 bg-white px-5 pt-4 pb-4 shadow-sm">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-stone-500">Bàn số 12</p>

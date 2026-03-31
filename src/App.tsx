@@ -3,17 +3,23 @@ import { BottomNav } from './components/BottomNav';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Toast from './components/Toast';
+import Cart from './pages/Cart';
+import Confirmation from './components/Confirmation';
+import History from './pages/History';
+import OrderDetail from './components/OrderDetail';
 
 export const App = () => {
   const [currentScreen, setCurrentScreen] = useState<
-    'home' | 'detail' | 'cart' | 'history' | 'confirmation'
+    'home' | 'detail' | 'cart' | 'history' | 'confirmation' | 'order-detail'
   >('home');
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [detailQty, setDetailQty] = useState(1);
-  const [cartItemCount, setCartItemCount] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const showToast = (message: any, type = 'success') => {
     setToast({ show: true, message, type });
@@ -53,6 +59,24 @@ export const App = () => {
           detailQty={detailQty}
           setDetailQty={setDetailQty}
         />
+      )}
+      {currentScreen === 'cart' && (
+        <Cart
+          cart={cart}
+          navigateTo={navigateTo}
+          setCart={setCart}
+          showToast={showToast}
+          setOrderHistory={setOrderHistory}
+        />
+      )}
+      {currentScreen === 'confirmation' && (
+        <Confirmation navigateTo={navigateTo} orderHistory={orderHistory} />
+      )}
+      {currentScreen === 'history' && (
+        <History navigateTo={navigateTo} orderHistory={orderHistory} />
+      )}
+      {currentScreen === 'order-detail' && (
+        <OrderDetail navigateTo={navigateTo} selectedOrder={selectedOrder} />
       )}
 
       {(currentScreen === 'home' || currentScreen === 'cart' || currentScreen === 'history') && (
