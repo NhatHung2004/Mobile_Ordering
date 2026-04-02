@@ -1,15 +1,19 @@
 import { ChevronLeft, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { createOrderApi } from '../service/menu';
+import { useOrderStore } from '../store/order';
+import { useState } from 'react';
 
 interface CartProps {
   cart: any[];
   navigateTo: (screen: string, payload?: any) => void;
   setCart: (cart: any) => void;
   showToast: (message: string, type?: string) => void;
-  setOrderHistory: (history: any) => void;
 }
 
-export default function Cart({ cart, navigateTo, setCart, showToast, setOrderHistory }: CartProps) {
+export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps) {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const [isLoading, setIsLoading] = useState(false);
+  const { addOrder, currentTable } = useOrderStore();
 
   const removeFromCart = (id: string) => {
     setCart((prev: any) => prev.filter((item: any) => item.id !== id));
@@ -28,23 +32,52 @@ export default function Cart({ cart, navigateTo, setCart, showToast, setOrderHis
     );
   };
 
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (cart.length === 0) return;
 
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const newOrder = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      items: [...cart],
-      total: total,
-      timestamp: new Date().toLocaleTimeString('vi-VN', {
-        hour12: false,
-      }),
+    // if (!currentTable) {
+    //   showToast('Vui lòng chọn bàn trước khi đặt món!', 'error');
+    //   return;
+    // }
+
+    setIsLoading(true);
+    const orderPayload = {
+      tableId: currentTable || 1,
+      orderTime: new Date().toISOString(),
       status: 'Preparing',
+      totalAmount: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      note: '',
+      items: cart.map((item) => ({
+        menuItemId: item.id,
+        menuItemName: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        note: '',
+      })),
     };
 
-    setOrderHistory((prev: any) => [newOrder, ...prev]);
-    setCart([]);
-    navigateTo('confirmation');
+    try {
+      const response: any = await createOrderApi(orderPayload);
+
+      const newOrderForHistory = {
+        id: response?.id || `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+        items: response.items || [...cart],
+        total: response.totalAmount || orderPayload.totalAmount,
+        timestamp: response.orderTime || new Date().toISOString(),
+        status: response.status || 'Preparing',
+      };
+
+      addOrder(newOrderForHistory);
+
+      setCart([]);
+      showToast('Đặt món thành công! Bếp đang chuẩn bị.');
+      navigateTo('confirmation');
+    } catch (error) {
+      showToast('Có lỗi xảy ra khi gửi đơn hàng. Vui lòng thử lại!', 'error');
+      setIsLoading(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -91,7 +124,7 @@ export default function Cart({ cart, navigateTo, setCart, showToast, setOrderHis
                     </button>
                   </div>
                   <span className="mt-1 text-sm font-bold text-orange-600">
-                    ${item.price.toFixed(2)}
+                    {item.price.toLocaleString('vi-VN')} đ
                   </span>
 
                   <div className="mt-auto flex w-max items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 p-1">
@@ -118,10 +151,10 @@ export default function Cart({ cart, navigateTo, setCart, showToast, setOrderHis
 
           {/* Order Summary */}
           <div className="mb-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 font-bold text-stone-800">Tóm tắt đơn hàng</h3>
+            {/* <h3 className="mb-4 font-bold text-stone-800">Tóm tắt đơn hàng</h3> */}
             <div className="flex justify-between text-lg font-bold text-stone-800">
               <span>Tổng</span>
-              <span className="text-orange-600">${total.toFixed(2)}</span>
+              <span className="text-orange-600">{total.toLocaleString('vi-VN')} đ</span>
             </div>
           </div>
 
@@ -139,7 +172,13 @@ export default function Cart({ cart, navigateTo, setCart, showToast, setOrderHis
             onClick={placeOrder}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-lg font-bold text-white transition-transform active:scale-[0.98]"
           >
-            Xác nhận đơn hàng <ChevronLeft size={20} className="rotate-180" />
+            {isLoading ? (
+              <span>Đang xác nhận...</span>
+            ) : (
+              <>
+                Xác nhận đơn hàng <ChevronLeft size={20} className="rotate-180" />
+              </>
+            )}
           </button>
         </div>
       )}

@@ -19,7 +19,7 @@ export default function ProductDetail({
     <div className="animate-in slide-in-from-right min-h-screen bg-stone-50 pb-24 duration-300">
       <div className="relative h-72 w-full">
         <img
-          src={selectedItem.image}
+          src={selectedItem.imageUrl}
           alt={selectedItem.name}
           className="h-full w-full object-cover"
         />
@@ -38,12 +38,12 @@ export default function ProductDetail({
         <div className="rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-start justify-between">
             <h1 className="w-3/4 text-2xl font-bold text-stone-800">{selectedItem.name}</h1>
-            <div className="rounded-xl bg-orange-100 px-3 py-1.5 text-lg font-bold text-orange-600">
-              ${selectedItem.price.toFixed(2)}
+            <div className="shrink-0 rounded-xl bg-orange-100 px-3 py-1.5 text-lg font-bold whitespace-nowrap text-orange-600">
+              {selectedItem.price.toLocaleString('vi-VN')} đ
             </div>
           </div>
 
-          <div className="mb-6 flex flex-wrap gap-3">
+          {/* <div className="mb-6 flex flex-wrap gap-3">
             <div className="flex items-center gap-1.5 rounded-lg border border-stone-100 bg-stone-50 px-3 py-1.5 text-sm font-medium text-stone-600">
               <Star size={16} className="fill-orange-400 text-orange-400" />
               {selectedItem.rating}
@@ -56,7 +56,7 @@ export default function ProductDetail({
               <Flame size={16} className="text-stone-400" />
               {selectedItem.calories} kcal
             </div>
-          </div>
+          </div> */}
 
           <h3 className="mb-2 font-bold text-stone-800">Chi Tiết</h3>
           <p className="mb-8 text-sm leading-relaxed text-stone-500">{selectedItem.description}</p>
@@ -90,7 +90,7 @@ export default function ProductDetail({
           className="flex w-full items-center justify-between rounded-2xl bg-orange-500 px-6 py-4 text-lg font-bold text-white transition-transform active:scale-[0.98]"
         >
           <span>Thêm món</span>
-          <span>${(selectedItem.price * detailQty).toFixed(2)}</span>
+          <span>{(selectedItem.price * detailQty).toLocaleString('vi-VN')} đ</span>
         </button>
       </div>
     </div>

@@ -21,5 +21,5 @@ export interface Order {
   items: CartItem[];
   total: number;
   timestamp: Date;
-  status: 'Preparing' | 'Completed';
+  status: string;
 }

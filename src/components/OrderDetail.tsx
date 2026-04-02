@@ -8,11 +8,6 @@ interface OrderDetailProps {
 export default function OrderDetail({ navigateTo, selectedOrder }: OrderDetailProps) {
   if (!selectedOrder) return null;
 
-  const total = selectedOrder.items.reduce(
-    (sum: number, item: any) => sum + item.price * item.quantity,
-    0,
-  );
-
   return (
     <div className="animate-in slide-in-from-right min-h-screen bg-stone-50 pb-24 duration-300">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-stone-100 bg-white px-5 pt-4 pb-4 shadow-sm">
@@ -42,15 +37,15 @@ export default function OrderDetail({ navigateTo, selectedOrder }: OrderDetailPr
           </div>
           <div className="text-sm text-stone-500">
             Đặt vào:{' '}
-            {selectedOrder.timestamp.toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
+            {new Date(selectedOrder.timestamp).toLocaleString('vi-VN', {
+              dateStyle: 'short',
+              timeStyle: 'short',
             })}
           </div>
         </div>
 
         <h3 className="mb-4 px-1 font-bold text-stone-800">
-          Items ({selectedOrder.items.reduce((sum: number, i: any) => sum + i.quantity, 0)})
+          Món đã đặt ({selectedOrder.items.reduce((sum: number, i: any) => sum + i.quantity, 0)})
         </h3>
         <div className="mb-6 flex flex-col gap-3">
           {selectedOrder.items.map((item: any, i: number) => (
@@ -62,13 +57,15 @@ export default function OrderDetail({ navigateTo, selectedOrder }: OrderDetailPr
                 <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
               </div>
               <div className="flex flex-1 flex-col justify-center">
-                <h4 className="mb-2 text-sm leading-tight font-bold text-stone-800">{item.name}</h4>
+                <h4 className="mb-2 text-sm leading-tight font-bold text-stone-800">
+                  {item.menuItemName}
+                </h4>
                 <div className="mt-auto flex items-center justify-between">
                   <span className="text-sm font-medium text-stone-500">
-                    {item.quantity}x ${item.price.toFixed(2)}
+                    {item.quantity}x {item.price.toLocaleString('vi-VN')} đ
                   </span>
                   <span className="font-bold text-stone-800">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    {(item.price * item.quantity).toLocaleString('vi-VN')} đ
                   </span>
                 </div>
               </div>
@@ -79,7 +76,7 @@ export default function OrderDetail({ navigateTo, selectedOrder }: OrderDetailPr
         <div className="mb-6 rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
           <div className="flex justify-between text-lg font-bold text-stone-800">
             <span>Tổng</span>
-            <span className="text-orange-600">${total.toFixed(2)}</span>
+            <span className="text-orange-600">{selectedOrder.total.toLocaleString('vi-VN')} đ</span>
           </div>
         </div>
 

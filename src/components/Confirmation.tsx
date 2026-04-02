@@ -1,11 +1,13 @@
 import { CheckCircle2, Plus } from 'lucide-react';
+import { useOrderStore } from '../store/order';
 
 interface ConfirmationProps {
   navigateTo: (screen: string, payload?: any) => void;
-  orderHistory: any[];
 }
 
-export default function Confirmation({ navigateTo, orderHistory }: ConfirmationProps) {
+export default function Confirmation({ navigateTo }: ConfirmationProps) {
+  const { orderHistory } = useOrderStore();
+
   return (
     <div className="animate-in zoom-in-95 flex min-h-screen flex-col items-center justify-center bg-stone-50 px-5 pb-20 duration-500">
       <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-100 text-green-500 shadow-sm">
