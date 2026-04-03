@@ -84,7 +84,14 @@ export const App = () => {
 
     const params = new URLSearchParams(window.location.search);
     const tableId = params.get('tableId');
-    if (tableId) setTable(tableId);
+    if (tableId) {
+      setTable(tableId);
+      params.delete('tableId');
+
+      const newSearch = params.toString() ? `?${params.toString()}` : '';
+      const newUrl = `${window.location.pathname}${newSearch}`;
+      window.history.replaceState({}, document.title, newUrl);
+    }
   }, [checkAndResetSession, setTable]);
 
   useEffect(() => {
