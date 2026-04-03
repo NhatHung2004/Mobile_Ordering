@@ -4,12 +4,12 @@ import type { Order } from '../types';
 
 interface OrderState {
   selectedOrder: Order | null;
-  orderHistory: Order[];
+  currentOrderId: number | string | null;
   currentTable: string | number | null;
   lastSessionDate: string;
 
   setTable: (tableId: string | number) => void;
-  addOrder: (order: Order) => void;
+  setCurrentOrderId: (id: number | string | null) => void;
   checkAndResetSession: () => void;
   setSelectedOrder: (order: Order | null) => void;
 }
@@ -18,17 +18,17 @@ export const useOrderStore = create<OrderState>()(
   persist(
     (set, get) => ({
       selectedOrder: null,
-      orderHistory: [],
+      currentOrderId: null,
       currentTable: null,
       lastSessionDate: new Date().toDateString(),
 
       setTable: (tableId) => set({ currentTable: tableId }),
 
-      addOrder: (order) =>
-        set((state) => ({
-          orderHistory: [order, ...state.orderHistory],
+      setCurrentOrderId: (id: any) =>
+        set({
+          currentOrderId: id,
           lastSessionDate: new Date().toDateString(),
-        })),
+        }),
 
       checkAndResetSession: () => {
         const { lastSessionDate } = get();
@@ -36,7 +36,8 @@ export const useOrderStore = create<OrderState>()(
 
         if (lastSessionDate !== today) {
           set({
-            orderHistory: [],
+            currentOrderId: null,
+            currentTable: null,
             lastSessionDate: today,
           });
         }
@@ -48,7 +49,7 @@ export const useOrderStore = create<OrderState>()(
       name: 'restaurant-order-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        orderHistory: state.orderHistory,
+        currentOrderId: state.currentOrderId,
         lastSessionDate: state.lastSessionDate,
       }),
     },

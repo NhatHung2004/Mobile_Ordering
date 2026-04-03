@@ -10,6 +10,7 @@ import OrderDetail from './components/OrderDetail';
 import { useMenuStore } from './store/menu';
 import { useOrderStore } from './store/order';
 import RequireTablePopup from './components/RequireTablePopup';
+import { updateOrderStatus } from './service/menu';
 
 export const App = () => {
   const [currentScreen, setCurrentScreen] = useState<
@@ -21,8 +22,62 @@ export const App = () => {
   const loadMenuData = useMenuStore((state) => state.loadMenuData);
 
   const { selectedItem, setSelectedItem } = useMenuStore();
-  const { selectedOrder, setSelectedOrder, checkAndResetSession, setTable, currentTable } =
-    useOrderStore();
+  const {
+    selectedOrder,
+    setCurrentOrderId,
+    setSelectedOrder,
+    checkAndResetSession,
+    setTable,
+    currentTable,
+  } = useOrderStore();
+
+  useEffect(() => {
+    const handleVnpayReturn = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const vnp_ResponseCode = params.get('vnp_ResponseCode');
+      const vnp_TxnRef = params.get('vnp_TxnRef');
+
+      if (vnp_ResponseCode) {
+        if (vnp_ResponseCode === '00') {
+          showToast('Thanh toán thành công! Chúc bạn ngon miệng.');
+
+          const orderId = vnp_TxnRef?.split('_')[0];
+          if (orderId) {
+            try {
+              // call API to update order status to "Completed"
+              await updateOrderStatus(orderId, 'Completed');
+            } catch (error) {
+              console.error('Error updating order status:', error);
+            }
+          }
+
+          setCurrentOrderId(null);
+        } else {
+          showToast('Thanh toán thất bại hoặc đã bị hủy!', 'error');
+        }
+
+        // window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Clean up VNPAY query params
+        const keysToDelete: string[] = [];
+        params.forEach((_value, key) => {
+          if (key.startsWith('vnp_')) keysToDelete.push(key);
+        });
+
+        // Delete the VNPAY-related query parameters
+        keysToDelete.forEach((key) => params.delete(key));
+
+        // Update the URL without reloading the page
+        const newSearch = params.toString() ? `?${params.toString()}` : '';
+        const newUrl = `${window.location.pathname}${newSearch}`;
+
+        // Use replaceState to avoid adding a new entry in the browser history
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    };
+
+    void handleVnpayReturn();
+  }, []);
 
   useEffect(() => {
     checkAndResetSession();
@@ -38,9 +93,9 @@ export const App = () => {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const showToast = (message: any, type = 'success') => {
+  const showToast = (message: any, type = 'success', time = 3000) => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), time);
   };
 
   const navigateTo = (screen: any, payload: any = null) => {
@@ -62,7 +117,7 @@ export const App = () => {
       }
       return [...prev, { ...item, quantity }];
     });
-    showToast(`Thêm ${quantity} ${item.name} vào đơn món!`);
+    showToast(`Thêm ${quantity} ${item.name} vào đơn món!`, 'success', 1000);
   };
 
   if (!currentTable) {

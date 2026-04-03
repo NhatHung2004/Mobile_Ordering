@@ -1,4 +1,5 @@
-import { ChevronLeft, Clock, Flame, Minus, Plus, Star } from 'lucide-react';
+import { ChevronLeft, Clock, Flame, Minus, PenLine, Plus, Star } from 'lucide-react';
+import { useState } from 'react';
 
 interface ProductDetailProps {
   navigateTo: (screen: string, payload?: any) => void;
@@ -15,6 +16,8 @@ export default function ProductDetail({
   detailQty,
   setDetailQty,
 }: ProductDetailProps) {
+  const [note, setNote] = useState('');
+
   return (
     <div className="animate-in slide-in-from-right min-h-screen bg-stone-50 pb-24 duration-300">
       <div className="relative h-72 w-full">
@@ -80,13 +83,27 @@ export default function ProductDetail({
               </button>
             </div>
           </div>
+
+          <div className="mt-6">
+            <div className="mb-2 flex items-center gap-2 font-bold text-stone-800">
+              <PenLine size={16} className="text-orange-500" />
+              <h3>Ghi chú</h3>
+            </div>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ví dụ: Không hành, ít đá, ăn cay..."
+              className="w-full resize-none rounded-2xl border border-stone-100 bg-stone-50 p-4 text-sm text-stone-700 transition-all outline-none focus:border-orange-500 focus:bg-white focus:ring-2 focus:ring-orange-100"
+              rows={3}
+            />
+          </div>
         </div>
       </div>
 
       {/* Sticky Bottom Bar */}
       <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-stone-100 bg-white p-5 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:mx-auto md:max-w-md">
         <button
-          onClick={() => addToCart(selectedItem, detailQty)}
+          onClick={() => addToCart({ ...selectedItem, note }, detailQty)}
           className="flex w-full items-center justify-between rounded-2xl bg-orange-500 px-6 py-4 text-lg font-bold text-white transition-transform active:scale-[0.98]"
         >
           <span>Thêm món</span>

@@ -6,7 +6,7 @@ interface ConfirmationProps {
 }
 
 export default function Confirmation({ navigateTo }: ConfirmationProps) {
-  const { orderHistory } = useOrderStore();
+  const { currentOrderId } = useOrderStore();
 
   return (
     <div className="animate-in zoom-in-95 flex min-h-screen flex-col items-center justify-center bg-stone-50 px-5 pb-20 duration-500">
@@ -21,7 +21,7 @@ export default function Confirmation({ navigateTo }: ConfirmationProps) {
       <div className="mb-8 w-full rounded-3xl border border-stone-100 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center justify-between border-b border-stone-100 pb-4">
           <span className="text-sm text-stone-500">Mã đơn hàng</span>
-          <span className="font-bold text-stone-800">{orderHistory[0]?.id}</span>
+          <span className="font-bold text-stone-800">{currentOrderId}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-stone-500">Thời gian ước tính</span>

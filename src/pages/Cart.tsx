@@ -1,5 +1,5 @@
 import { ChevronLeft, Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { createOrderApi } from '../service/menu';
+import { createOrderApi, editOrderApi, getOrderHistoryApi } from '../service/menu';
 import { useOrderStore } from '../store/order';
 import { useState } from 'react';
 
@@ -13,7 +13,7 @@ interface CartProps {
 export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps) {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const [isLoading, setIsLoading] = useState(false);
-  const { addOrder, currentTable } = useOrderStore();
+  const { setCurrentOrderId, currentOrderId, currentTable } = useOrderStore();
 
   const removeFromCart = (id: string) => {
     setCart((prev: any) => prev.filter((item: any) => item.id !== id));
@@ -35,39 +35,69 @@ export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps
   const placeOrder = async () => {
     if (cart.length === 0) return;
 
-    // if (!currentTable) {
-    //   showToast('Vui lòng chọn bàn trước khi đặt món!', 'error');
-    //   return;
-    // }
-
     setIsLoading(true);
-    const orderPayload = {
-      tableId: currentTable || 1,
-      orderTime: new Date().toISOString(),
-      status: 'Preparing',
-      totalAmount: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
-      note: '',
-      items: cart.map((item) => ({
-        menuItemId: item.id,
-        menuItemName: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        note: '',
-      })),
-    };
 
     try {
-      const response: any = await createOrderApi(orderPayload);
+      let finalItems: any[] = [];
+      let finalTotal = 0;
+      let isUpdating = false;
 
-      const newOrderForHistory = {
-        id: response?.id || `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        items: response.items || [...cart],
-        total: response.totalAmount || orderPayload.totalAmount,
-        timestamp: response.orderTime || new Date().toISOString(),
-        status: response.status || 'Preparing',
+      // If already has an order id in session
+      if (currentOrderId) {
+        try {
+          const existingOrder: any = await getOrderHistoryApi(currentOrderId);
+          if (existingOrder && existingOrder.items) {
+            finalItems = existingOrder.items.map((existingItem: any) => ({
+              menuItemId: existingItem.menuItemId,
+              quantity: existingItem.quantity,
+              price: existingItem.price,
+              note: existingItem.note || '',
+            }));
+            isUpdating = true;
+          }
+        } catch (error) {
+          console.error('Error fetching existing order:', error);
+          setCurrentOrderId(null);
+        }
+      }
+
+      // Merge existing items with new cart items
+      cart.forEach((cartItem) => {
+        const existingIndex = finalItems.findIndex((i: any) => i.menuItemId === cartItem.id);
+        if (existingIndex >= 0) {
+          finalItems[existingIndex].quantity += cartItem.quantity;
+        } else {
+          finalItems.push({
+            menuItemId: cartItem.id,
+            quantity: cartItem.quantity,
+            price: cartItem.price,
+            note: cartItem.note || '',
+          });
+        }
+      });
+
+      // Recalculate total
+      finalTotal = finalItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      const orderPayload = {
+        tableId: currentTable || 1,
+        orderTime: new Date().toISOString(),
+        status: 'Pending',
+        totalAmount: finalTotal,
+        note: '',
+        items: finalItems,
       };
 
-      addOrder(newOrderForHistory);
+      // Call API
+      if (isUpdating) {
+        await editOrderApi(orderPayload, currentOrderId!);
+      } else {
+        const response: any = await createOrderApi({
+          ...orderPayload,
+          menuItemName: cart[0].name,
+        });
+        setCurrentOrderId(response.id);
+      }
 
       setCart([]);
       showToast('Đặt món thành công! Bếp đang chuẩn bị.');
@@ -123,11 +153,14 @@ export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps
                       <Trash2 size={18} />
                     </button>
                   </div>
+                  {item.note && (
+                    <span className="text-xs text-stone-500 italic">Ghi chú: {item.note}</span>
+                  )}
                   <span className="mt-1 text-sm font-bold text-orange-600">
                     {item.price.toLocaleString('vi-VN')} đ
                   </span>
 
-                  <div className="mt-auto flex w-max items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 p-1">
+                  <div className="mt-3 flex w-max items-center gap-3 rounded-xl border border-stone-100 bg-stone-50 p-1">
                     <button
                       onClick={() => updateCartQuantity(item.id, -1)}
                       className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-stone-600 shadow-sm"
