@@ -49,6 +49,7 @@ export const useOrderStore = create<OrderState>()(
       name: 'restaurant-order-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        currentTable: state.currentTable,
         currentOrderId: state.currentOrderId,
         lastSessionDate: state.lastSessionDate,
       }),

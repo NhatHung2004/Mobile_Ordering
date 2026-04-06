@@ -1,4 +1,4 @@
-import { normalRequest } from '../http/client';
+import { normalRequest } from "../configs/http";
 
 interface MenuResponse {
   items: any[];

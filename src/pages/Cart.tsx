@@ -82,7 +82,7 @@ export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps
       const orderPayload = {
         tableId: currentTable || 1,
         orderTime: new Date().toISOString(),
-        status: 'Pending',
+        status: 'Preparing',
         totalAmount: finalTotal,
         note: '',
         items: finalItems,
