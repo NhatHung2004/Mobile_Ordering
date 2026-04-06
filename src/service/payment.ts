@@ -1,4 +1,4 @@
-import { normalRequest } from '../http/client';
+import { normalRequest } from "../configs/http";
 
 export const createVnPayUrl = async (orderId: string | number) => {
   try {

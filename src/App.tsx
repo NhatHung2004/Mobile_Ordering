@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { BottomNav } from './components/BottomNav';
 import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
@@ -11,6 +11,7 @@ import { useMenuStore } from './store/menu';
 import { useOrderStore } from './store/order';
 import RequireTablePopup from './components/RequireTablePopup';
 import { updateOrderStatus } from './service/menu';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 
 export const App = () => {
   const [currentScreen, setCurrentScreen] = useState<
@@ -24,6 +25,7 @@ export const App = () => {
   const { selectedItem, setSelectedItem } = useMenuStore();
   const {
     selectedOrder,
+    currentOrderId,
     setCurrentOrderId,
     setSelectedOrder,
     checkAndResetSession,
@@ -31,18 +33,65 @@ export const App = () => {
     currentTable,
   } = useOrderStore();
 
+  const currentOrderIdRef = useRef(currentOrderId);
+  useEffect(() => {
+    currentOrderIdRef.current = currentOrderId;
+  }, [currentOrderId]);
+
+  useEffect(() => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const hubUrl = `${baseUrl}/orderHub`;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(hubUrl)
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start()
+      .then(() => {
+        console.log('SignalR Connected!');
+        
+        // Lắng nghe sự kiện "OrderUpdated" từ Backend
+        connection.on('OrderUpdated', (data: { id: number; status: string }) => {
+          
+          // Kiểm tra nếu thông báo này thuộc về đơn hàng hiện tại của bàn
+          if (Number(currentOrderIdRef.current) === data.id) {
+            
+            // Bắt điều kiện trạng thái. Tuỳ thuộc mô hình, nếu update thành "Pending"
+            if (data.status === 'Pending') {
+              showToast('Món ăn đang được mang lên', 'success', 5000);
+
+              const audio = new Audio('/notification.mp3');
+              audio.play().catch((error) => console.error('Error playing audio:', error));
+            }
+          }
+        });
+      })
+      .catch((error) => console.error('SignalR Connection Error: ', error));
+
+    return () => {
+      connection.off('OrderUpdated');
+      connection.stop();
+    };
+  }, []);
+
+  const isVnpayProcessed = useRef(false);
   useEffect(() => {
     const handleVnpayReturn = async () => {
+      if (isVnpayProcessed.current) return;
+
       const params = new URLSearchParams(window.location.search);
       const vnp_ResponseCode = params.get('vnp_ResponseCode');
       const vnp_TxnRef = params.get('vnp_TxnRef');
 
       if (vnp_ResponseCode) {
+        isVnpayProcessed.current = true;
         if (vnp_ResponseCode === '00') {
           showToast('Thanh toán thành công! Chúc bạn ngon miệng.');
 
           const orderId = vnp_TxnRef?.split('_')[0];
-          if (orderId) {
+          if (orderId && orderId !== '') {
             try {
               // call API to update order status to "Completed"
               await updateOrderStatus(orderId, 'Completed');
