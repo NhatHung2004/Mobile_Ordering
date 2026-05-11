@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Star } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useMenuStore } from '../store/menu';
 import { useOrderStore } from '../store/order';
 

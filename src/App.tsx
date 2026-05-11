@@ -7,6 +7,7 @@ import Cart from './pages/Cart';
 import Confirmation from './components/Confirmation';
 import History from './pages/History';
 import OrderDetail from './components/OrderDetail';
+import { CallStaffButton } from './components/CallStaffButton';
 import { useMenuStore } from './store/menu';
 import { useOrderStore } from './store/order';
 import RequireTablePopup from './components/RequireTablePopup';
@@ -48,17 +49,13 @@ export const App = () => {
       .withAutomaticReconnect()
       .build();
 
-    connection.start()
+    connection
+      .start()
       .then(() => {
         console.log('SignalR Connected!');
-        
-        // Lắng nghe sự kiện "OrderUpdated" từ Backend
+
         connection.on('OrderUpdated', (data: { id: number; status: string }) => {
-          
-          // Kiểm tra nếu thông báo này thuộc về đơn hàng hiện tại của bàn
           if (Number(currentOrderIdRef.current) === data.id) {
-            
-            // Bắt điều kiện trạng thái. Tuỳ thuộc mô hình, nếu update thành "Pending"
             if (data.status === 'Pending') {
               showToast('Món ăn đang được mang lên', 'success', 5000);
 
@@ -212,6 +209,9 @@ export const App = () => {
           cartItemCount={cartItemCount}
         />
       )}
+
+      {/* Floating Call Staff Button */}
+      <CallStaffButton showToast={showToast} />
 
       {/* Toast Notification */}
       <Toast toast={toast} />
