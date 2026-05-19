@@ -181,8 +181,20 @@ export const App = () => {
     );
   }
 
+  const callStaffBottom =
+    currentScreen === 'detail'
+      ? 'calc(var(--product-detail-sticky-bar-height) + env(safe-area-inset-bottom, 0px) + var(--call-staff-fab-gap))'
+      : currentScreen === 'cart' && cart.length > 0
+        ? 'calc(var(--bottom-nav-total-height) + var(--cart-confirm-bar-height) + var(--call-staff-fab-gap))'
+        : currentScreen === 'home' || currentScreen === 'cart' || currentScreen === 'history'
+          ? 'calc(var(--bottom-nav-total-height) + var(--call-staff-fab-gap))'
+          : 'calc(env(safe-area-inset-bottom, 0px) + var(--call-staff-fab-gap))';
+
   return (
-    <div className="hide-scrollbar relative mx-auto h-screen overflow-x-hidden overflow-y-auto bg-stone-50 font-sans text-stone-800 shadow-2xl">
+    <div
+      className="hide-scrollbar relative mx-auto h-screen overflow-x-hidden overflow-y-auto bg-stone-50 font-sans text-stone-800 shadow-2xl"
+      style={{ ['--call-staff-bottom' as string]: callStaffBottom }}
+    >
       {currentScreen === 'home' && <Home navigateTo={navigateTo} />}
       {currentScreen === 'detail' && (
         <ProductDetail

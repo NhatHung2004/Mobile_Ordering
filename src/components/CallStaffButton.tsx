@@ -40,7 +40,8 @@ export const CallStaffButton = ({ onCall, showToast }: CallStaffButtonProps) => 
     <button
       onClick={handleCall}
       disabled={isLoading}
-      className="fixed right-4 bottom-20 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition-all duration-200 active:scale-95 disabled:bg-red-400"
+      className="fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg transition-[bottom,transform] duration-200 active:scale-95 disabled:bg-red-400"
+      style={{ bottom: 'var(--call-staff-bottom, calc(var(--bottom-nav-total-height) + var(--call-staff-fab-gap)))' }}
       title="Gọi nhân viên"
     >
       <span className="text-2xl">{isLoading ? '⏳' : '🔔'}</span>

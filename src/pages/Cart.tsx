@@ -200,7 +200,7 @@ export default function Cart({ cart, navigateTo, setCart, showToast }: CartProps
 
       {/* Sticky Confirm Button */}
       {cart.length > 0 && (
-        <div className="fixed right-0 bottom-18 left-0 z-40 border-t border-stone-100 bg-white p-5 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:bottom-18 md:mx-auto md:max-w-md">
+        <div className="fixed right-0 bottom-(--bottom-nav-total-height) left-0 z-45 border-t border-stone-100 bg-white p-5 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] md:bottom-(--bottom-nav-total-height) md:mx-auto md:max-w-md">
           <button
             onClick={placeOrder}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-lg font-bold text-white transition-transform active:scale-[0.98]"
