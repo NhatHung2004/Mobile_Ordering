@@ -13,6 +13,7 @@ import { useOrderStore } from './store/order';
 import RequireTablePopup from './components/RequireTablePopup';
 import { updateOrderStatus } from './service/menu';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { checkTableEntry } from './service/table';
 
 export const App = () => {
   const [currentScreen, setCurrentScreen] = useState<
@@ -22,6 +23,9 @@ export const App = () => {
   const [cart, setCart] = useState<any[]>([]);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const loadMenuData = useMenuStore((state) => state.loadMenuData);
+
+  const [isValidatingTable, setIsValidatingTable] = useState(false);
+  const [tableErrorMessage, setTableErrorMessage] = useState<string | null>(null);
 
   const { selectedItem, setSelectedItem } = useMenuStore();
   const {
@@ -130,13 +134,36 @@ export const App = () => {
 
     const params = new URLSearchParams(window.location.search);
     const tableId = params.get('tableId');
-    if (tableId) {
-      setTable(tableId);
-      params.delete('tableId');
 
-      const newSearch = params.toString() ? `?${params.toString()}` : '';
-      const newUrl = `${window.location.pathname}${newSearch}`;
-      window.history.replaceState({}, document.title, newUrl);
+    if (tableId) {
+      const verifyTable = async () => {
+        setIsValidatingTable(true);
+        setTableErrorMessage(null);
+
+        try {
+          const res = await checkTableEntry(tableId);
+
+          if (res && (res as any).canEnter) {
+            setTable(tableId);
+
+            params.delete('tableId');
+            const newSearch = params.toString() ? `?${params.toString()}` : '';
+            const newUrl = `${window.location.pathname}${newSearch}`;
+            window.history.replaceState({}, document.title, newUrl);
+          } else {
+            setTableErrorMessage((res as any).message || 'Bàn không khả dụng vào lúc này.');
+          }
+        } catch (error) {
+          console.error('Lỗi khi kiểm tra bàn:', error);
+          setTableErrorMessage(
+            'Đã xảy ra lỗi hệ thống khi kiểm tra trạng thái bàn. Vui lòng thử lại!',
+          );
+        } finally {
+          setIsValidatingTable(false);
+        }
+      };
+
+      verifyTable();
     }
   }, [checkAndResetSession, setTable]);
 
@@ -172,6 +199,38 @@ export const App = () => {
     });
     showToast(`Thêm ${quantity} ${item.name} vào đơn món!`, 'success', 1000);
   };
+
+  // HIỂN THỊ MÀN HÌNH LOADING KHI ĐANG GỌI API
+  if (isValidatingTable) {
+    return (
+      <div className="relative mx-auto flex h-screen w-full flex-col items-center justify-center bg-stone-50 md:max-w-md">
+        <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-orange-500 border-t-transparent"></div>
+        <p className="font-medium text-stone-600">Đang kiểm tra trạng thái bàn...</p>
+      </div>
+    );
+  }
+
+  // HIỂN THỊ MÀN HÌNH LỖI NẾU BÀN KHÔNG AVAILABLE
+  if (tableErrorMessage) {
+    return (
+      <div className="relative mx-auto flex h-screen w-full items-center justify-center bg-stone-50 md:max-w-md">
+        <div className="mx-5 w-full max-w-sm rounded-3xl bg-white p-8 text-center shadow-xl">
+          <div className="mb-4 flex justify-center text-red-500">
+            <svg className="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h2 className="mb-2 text-xl font-bold text-stone-800">Không thể gọi món</h2>
+          <p className="text-stone-500">{tableErrorMessage}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!currentTable) {
     return (
