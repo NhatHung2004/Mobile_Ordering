@@ -37,6 +37,7 @@ export const App = () => {
     checkAndResetSession,
     setTable,
     currentTable,
+    clearUserSession,
   } = useOrderStore();
 
   const currentOrderIdRef = useRef(currentOrderId);
@@ -45,6 +46,8 @@ export const App = () => {
   }, [currentOrderId]);
 
   useEffect(() => {
+    if (!currentTable) return;
+
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const hubUrl = `${baseUrl}/orderHub`;
 
@@ -59,9 +62,24 @@ export const App = () => {
       .then(() => {
         console.log('SignalR Connected!');
 
-        connection.on('OrderUpdated', (data: { id: number; status: string }) => {
-          if (Number(currentOrderIdRef.current) === data.id) {
-            if (data.status === 'Pending') {
+        // Lắng nghe sự kiện bàn được giải phóng
+        connection.on('TableOccupied', (table: { id: number; status: string }) => {
+          if (table.id === Number(currentTable) && table.status === 'Available') {
+            clearUserSession();
+            window.location.href = '/';
+          }
+        });
+
+        // Lắng nghe trực tiếp sự kiện đơn hàng được cập nhật
+        connection.on('OrderUpdated', (order: { id: number; status: string; tableId?: number }) => {
+          if (order.tableId === Number(currentTable) && order.status === 'Completed') {
+            clearUserSession();
+            showToast('Đơn hàng của bạn đã hoàn thành! Cảm ơn quý khách.', 'success', 3000);
+            setTimeout(() => {
+              window.location.href = '/';
+            }, 3000);
+          } else if (Number(currentOrderIdRef.current) === order.id) {
+            if (order.status === 'Pending') {
               showToast('Món ăn đang được mang lên', 'success', 5000);
 
               const audio = new Audio('/notification.mp3');
@@ -73,10 +91,11 @@ export const App = () => {
       .catch((error) => console.error('SignalR Connection Error: ', error));
 
     return () => {
+      connection.off('TableOccupied');
       connection.off('OrderUpdated');
       connection.stop();
     };
-  }, []);
+  }, [currentTable]);
 
   const isVnpayProcessed = useRef(false);
   useEffect(() => {

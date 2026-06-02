@@ -12,6 +12,7 @@ interface OrderState {
   setCurrentOrderId: (id: number | string | null) => void;
   checkAndResetSession: () => void;
   setSelectedOrder: (order: Order | null) => void;
+  clearUserSession: () => void;
 }
 
 export const useOrderStore = create<OrderState>()(
@@ -44,6 +45,12 @@ export const useOrderStore = create<OrderState>()(
       },
 
       setSelectedOrder: (order) => set({ selectedOrder: order }),
+
+      clearUserSession: () =>
+        set({
+          currentOrderId: null,
+          selectedOrder: null,
+        }),
     }),
     {
       name: 'restaurant-order-storage',

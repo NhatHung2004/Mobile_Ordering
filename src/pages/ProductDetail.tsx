@@ -1,4 +1,4 @@
-import { ChevronLeft, Clock, Flame, Minus, PenLine, Plus, Star } from 'lucide-react';
+import { ChevronLeft, Minus, PenLine, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface ProductDetailProps {
