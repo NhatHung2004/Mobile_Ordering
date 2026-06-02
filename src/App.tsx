@@ -14,6 +14,7 @@ import RequireTablePopup from './components/RequireTablePopup';
 import { updateOrderStatus } from './service/menu';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { checkTableEntry } from './service/table';
+import { paymentCallback } from './service/payment';
 
 export const App = () => {
   const [currentScreen, setCurrentScreen] = useState<
@@ -134,6 +135,7 @@ export const App = () => {
 
     const params = new URLSearchParams(window.location.search);
     const tableId = params.get('tableId');
+    const vnpResponseCode = params.get('vnp_ResponseCode');
 
     if (tableId) {
       const verifyTable = async () => {
@@ -141,14 +143,21 @@ export const App = () => {
         setTableErrorMessage(null);
 
         try {
+          if (vnpResponseCode) {
+            try {
+              const queryString = window.location.search;
+              await paymentCallback(queryString);
+            } catch (payError) {
+              console.error('Lỗi khi xác nhận thanh toán với server:', payError);
+            }
+          }
+
           const res = await checkTableEntry(tableId);
 
           if (res && (res as any).canEnter) {
             setTable(tableId);
 
-            params.delete('tableId');
-            const newSearch = params.toString() ? `?${params.toString()}` : '';
-            const newUrl = `${window.location.pathname}${newSearch}`;
+            const newUrl = window.location.pathname;
             window.history.replaceState({}, document.title, newUrl);
           } else {
             setTableErrorMessage((res as any).message || 'Bàn không khả dụng vào lúc này.');
@@ -166,6 +175,7 @@ export const App = () => {
       verifyTable();
     }
   }, [checkAndResetSession, setTable]);
+
 
   useEffect(() => {
     loadMenuData();

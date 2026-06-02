@@ -12,3 +12,13 @@ export const createVnPayUrl = async (orderId: string | number) => {
     throw error;
   }
 };
+
+export const paymentCallback = async (queryString: string) => {
+  try {
+    const res = await normalRequest(`/api/payments/vnpay/callback${queryString}`);
+    return res;
+  } catch (error) {
+    console.error('Error fetching menu items:', error);
+    throw error;
+  }
+};
